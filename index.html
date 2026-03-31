@@ -1,0 +1,135 @@
+﻿<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>シフト自動作成アプリ</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Local Shift Planner</p>
+        <h1>シフト自動作成アプリ</h1>
+        <p class="hero-text">
+          ブラウザだけで設定、シフト生成、表示、印刷、CSV出力まで完結するローカルアプリです。
+        </p>
+      </div>
+      <div class="hero-actions print-hidden">
+        <button type="button" id="generateButton" class="primary-button">シフト生成</button>
+        <button type="button" id="printButton">印刷</button>
+        <button type="button" id="csvButton">CSVダウンロード</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="panel print-hidden" aria-labelledby="settingsTitle">
+        <div class="panel-header">
+          <h2 id="settingsTitle">設定</h2>
+          <p>年月、スタッフ名、目標勤務数、不可日を入力してください。</p>
+        </div>
+
+        <form id="shiftForm">
+          <div class="controls-grid">
+            <label class="field">
+              <span>年</span>
+              <input type="number" id="yearInput" min="2000" max="2100" required>
+            </label>
+            <label class="field">
+              <span>月</span>
+              <input type="number" id="monthInput" min="1" max="12" required>
+            </label>
+          </div>
+
+          <div class="section-block">
+            <div class="section-head">
+              <h3>スタッフ設定</h3>
+              <p>各スタッフの名前と目標勤務数を入力してください。</p>
+            </div>
+            <div id="targetSummary" class="target-summary" aria-live="polite"></div>
+            <div id="staffInputs" class="staff-grid"></div>
+          </div>
+
+          <div class="section-block">
+            <div class="section-head">
+              <h3>不可日設定</h3>
+              <p>縦軸は日付、横軸はスタッフです。上の入力モードを選んでセルをクリックしてください。</p>
+            </div>
+            <div id="availabilityModeSelector" class="availability-modes"></div>
+            <div id="availabilityLegend" class="availability-legend"></div>
+            <div id="availabilityGrid" class="availability-grid"></div>
+          </div>
+        </form>
+
+        <div id="messageBox" class="message-box" aria-live="polite"></div>
+      </section>
+
+      <section class="panel results-panel" aria-labelledby="resultsTitle">
+        <div class="panel-header">
+          <h2 id="resultsTitle">生成結果</h2>
+          <p>シフト表、勤務集計、ペア回数を表示します。</p>
+        </div>
+
+        <div id="summaryCards" class="summary-cards"></div>
+
+        <div class="table-card">
+          <div class="table-header">
+            <h3>シフト表</h3>
+            <p id="monthLabel"></p>
+          </div>
+          <div class="table-wrap">
+            <table id="scheduleTable" class="result-table">
+              <thead></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="table-card">
+          <div class="table-header">
+            <h3>勤務集計</h3>
+            <p>目標勤務数との比較と、役割ごとの実績を表示します。</p>
+          </div>
+          <div class="table-wrap">
+            <table id="statsTable" class="result-table">
+              <thead></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div id="pairSummary" class="inline-summary"></div>
+        </div>
+
+        <div class="table-card">
+          <div class="table-header">
+            <h3>ペア回数一覧</h3>
+            <p>一緒に勤務した回数の偏りを確認できます。</p>
+          </div>
+          <div class="table-wrap">
+            <table id="pairTable" class="result-table pair-table">
+              <thead></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <template id="staffInputTemplate">
+    <div class="staff-row">
+      <label class="field staff-name-field">
+        <span class="staff-label"></span>
+        <input type="text" class="staff-name-input" maxlength="20" required>
+      </label>
+      <label class="field staff-target-field">
+        <span>目標勤務数</span>
+        <input type="number" class="staff-target-input" min="0" step="1" required>
+      </label>
+    </div>
+  </template>
+
+  <script src="script.js"></script>
+</body>
+</html>
+
