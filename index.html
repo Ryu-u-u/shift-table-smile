@@ -10,42 +10,51 @@
   <div class="page">
     <header class="hero">
       <div>
-        <p class="eyebrow">Local Shift Planner</p>
-        <h1>シフト自動作成アプリ</h1>
+        <p class="eyebrow">シフト表づくり</p>
+        <h1>シフト作成</h1>
         <p class="hero-text">
-          ブラウザだけで設定、シフト生成、表示、印刷、CSV出力まで完結するローカルアプリです。
+          人数、勤務回数、休みの日を入れてシフト表を作ります。
         </p>
       </div>
       <div class="hero-actions print-hidden">
         <button type="button" id="generateButton" class="primary-button">シフト生成</button>
+        <button type="button" id="savedShiftButton" class="saved-shift-button">7月シフト表示</button>
         <button type="button" id="printButton">印刷</button>
-        <button type="button" id="csvButton">CSVダウンロード</button>
+        <button type="button" id="csvButton">CSV出力</button>
+        <button type="button" id="saveJsonButton">シフト保存</button>
+        <button type="button" id="loadJsonButton">読み込み</button>
+        <input type="file" id="loadJsonInput" accept="application/json,.json" hidden>
       </div>
     </header>
 
     <main class="layout">
       <section class="panel print-hidden" aria-labelledby="settingsTitle">
         <div class="panel-header">
-          <h2 id="settingsTitle">設定</h2>
-          <p>年月、スタッフ名、目標勤務数、不可日を入力してください。</p>
+          <h2 id="settingsTitle">入力</h2>
+          <p>上から順に入れてください。最大4連勤、週ごとの偏りを抑えて作ります。</p>
         </div>
 
         <form id="shiftForm">
+          <div class="step-label">1. 月と人数</div>
           <div class="controls-grid">
             <label class="field">
               <span>年</span>
-              <input type="number" id="yearInput" min="2000" max="2100" required>
+              <input type="number" id="yearInput" min="2000" max="2100" inputmode="numeric" required>
             </label>
             <label class="field">
               <span>月</span>
-              <input type="number" id="monthInput" min="1" max="12" required>
+              <input type="number" id="monthInput" min="1" max="12" inputmode="numeric" required>
+            </label>
+            <label class="field">
+              <span>スタッフ人数</span>
+              <input type="number" id="staffCountInput" min="6" max="20" step="1" inputmode="numeric" required>
             </label>
           </div>
 
           <div class="section-block">
             <div class="section-head">
-              <h3>スタッフ設定</h3>
-              <p>各スタッフの名前と目標勤務数を入力してください。</p>
+              <h3>2. スタッフ</h3>
+              <p>名前と、1か月に入る回数を入れます。</p>
             </div>
             <div id="targetSummary" class="target-summary" aria-live="polite"></div>
             <div id="staffInputs" class="staff-grid"></div>
@@ -53,11 +62,15 @@
 
           <div class="section-block">
             <div class="section-head">
-              <h3>不可日設定</h3>
-              <p>縦軸は日付、横軸はスタッフです。上の入力モードを選んでセルをクリックしてください。</p>
+              <h3>3. 休みの日</h3>
+              <p>休みの種類を選んで、表のマスを押します。</p>
             </div>
             <div id="availabilityModeSelector" class="availability-modes"></div>
             <div id="availabilityLegend" class="availability-legend"></div>
+            <div class="halfday-policy">
+              <span>AM×/PM×の日</span>
+              <div id="halfDayPolicySelector" class="halfday-policy-selector"></div>
+            </div>
             <div id="availabilityGrid" class="availability-grid"></div>
           </div>
         </form>
@@ -68,43 +81,44 @@
       <section class="panel results-panel" aria-labelledby="resultsTitle">
         <div class="panel-header">
           <h2 id="resultsTitle">生成結果</h2>
-          <p>シフト表、勤務集計、ペア回数を表示します。</p>
+          <p>作ったシフト表と確認用の集計です。</p>
         </div>
 
         <div id="summaryCards" class="summary-cards"></div>
 
-        <div class="table-card">
+        <div class="table-card report-card">
           <div class="table-header">
             <h3>シフト表</h3>
             <p id="monthLabel"></p>
           </div>
-          <div class="table-wrap">
+          <div id="reportSheetHeader" class="report-sheet-header"></div>
+          <div class="table-wrap report-table-wrap">
             <table id="scheduleTable" class="result-table">
               <thead></thead>
               <tbody></tbody>
             </table>
           </div>
-        </div>
-
-        <div class="table-card">
-          <div class="table-header">
-            <h3>勤務集計</h3>
-            <p>目標勤務数との比較と、役割ごとの実績を表示します。</p>
-          </div>
-          <div class="table-wrap">
+          <div class="report-section-title">≪ 出勤日数 ≫</div>
+          <div class="table-wrap report-table-wrap report-stats-wrap">
             <table id="statsTable" class="result-table">
               <thead></thead>
               <tbody></tbody>
             </table>
           </div>
-          <div id="pairSummary" class="inline-summary"></div>
+          <div class="table-wrap report-table-wrap report-position-wrap">
+            <table id="positionTable" class="result-table position-table">
+              <thead></thead>
+              <tbody></tbody>
+            </table>
+          </div>
         </div>
 
-        <div class="table-card">
+        <div class="table-card pair-card print-hidden">
           <div class="table-header">
             <h3>ペア回数一覧</h3>
             <p>一緒に勤務した回数の偏りを確認できます。</p>
           </div>
+          <div id="pairSummary" class="inline-summary"></div>
           <div class="table-wrap">
             <table id="pairTable" class="result-table pair-table">
               <thead></thead>
@@ -116,6 +130,16 @@
     </main>
   </div>
 
+  <div id="loadingOverlay" class="loading-overlay print-hidden" hidden>
+    <div class="loading-card" role="status" aria-live="assertive">
+      <div class="loading-spinner" aria-hidden="true"></div>
+      <div>
+        <strong>探索中</strong>
+        <p id="loadingText">シフトを探しています。</p>
+      </div>
+    </div>
+  </div>
+
   <template id="staffInputTemplate">
     <div class="staff-row">
       <label class="field staff-name-field">
@@ -123,8 +147,8 @@
         <input type="text" class="staff-name-input" maxlength="20" required>
       </label>
       <label class="field staff-target-field">
-        <span>目標勤務数</span>
-        <input type="number" class="staff-target-input" min="0" step="1" required>
+        <span>入る回数</span>
+        <input type="number" class="staff-target-input" min="0" step="1" inputmode="numeric" required>
       </label>
     </div>
   </template>
