@@ -79,7 +79,7 @@ const SAVED_SHIFT_PRESETS = {
     halfDayPolicy: HALF_DAY_POLICIES.FORBID,
     staff: [
       { name: "田口", targetCount: 15 },
-      { name: "都", targetCount: 10 },
+      { name: "都築", targetCount: 10 },
       { name: "本田", targetCount: 15 },
       { name: "松尾", targetCount: 15 },
       { name: "野口", targetCount: 15 },
