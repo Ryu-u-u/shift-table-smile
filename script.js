@@ -8,11 +8,6 @@ const WEEKDAY_ROLES = ["AA", "BA", "AP", "BP"];
 const SATURDAY_ROLES = ["AD", "BD"];
 const ALL_ROLES = [...WEEKDAY_ROLES, ...SATURDAY_ROLES];
 const REPORT_ROLE_ORDER = ["AA", "AP", "BA", "BP", "AD", "BD"];
-const WEEKDAY_PAIR_ROLES = [
-  ["AA", "BA"],
-  ["AP", "BP"],
-];
-const SATURDAY_PAIR_ROLES = [["AD", "BD"]];
 const WEEKDAY_NAMES = ["日", "月", "火", "水", "木", "金", "土"];
 const ROLE_LABELS = {
   AA: "AA（入口・午前）",
@@ -1282,12 +1277,8 @@ function estimateAssignmentImpact(day, roles, state, totalTargets, targetSaturda
     touched.forEach((staffIndex) => {
       saturdayAfter[staffIndex] += 1;
     });
-    addPair(pairAfter, roles.AD, roles.BD);
-  } else {
-    WEEKDAY_PAIR_ROLES.forEach(([roleA, roleB]) => {
-      addPair(pairAfter, roles[roleA], roles[roleB]);
-    });
   }
+  addAssignedStaffPairs(pairAfter, Object.values(roles));
 
   return evaluateVectors(
     totalsAfter,
@@ -1341,14 +1332,8 @@ function applyAssignment(day, candidate, state) {
     Object.values(candidate.roles).forEach((staffIndex) => {
       state.saturdayTotals[staffIndex] += 1;
     });
-    SATURDAY_PAIR_ROLES.forEach(([roleA, roleB]) => {
-      addPair(state.pairMatrix, candidate.roles[roleA], candidate.roles[roleB]);
-    });
-  } else {
-    WEEKDAY_PAIR_ROLES.forEach(([roleA, roleB]) => {
-      addPair(state.pairMatrix, candidate.roles[roleA], candidate.roles[roleB]);
-    });
   }
+  addAssignedStaffPairs(state.pairMatrix, Object.values(candidate.roles));
 
   day.roles.forEach((role) => {
     const staffIndex = candidate.roles[role];
@@ -1376,14 +1361,8 @@ function rollbackAssignment(day, candidate, state) {
     Object.values(candidate.roles).forEach((staffIndex) => {
       state.saturdayTotals[staffIndex] -= 1;
     });
-    SATURDAY_PAIR_ROLES.forEach(([roleA, roleB]) => {
-      addPair(state.pairMatrix, candidate.roles[roleA], candidate.roles[roleB], -1);
-    });
-  } else {
-    WEEKDAY_PAIR_ROLES.forEach(([roleA, roleB]) => {
-      addPair(state.pairMatrix, candidate.roles[roleA], candidate.roles[roleB], -1);
-    });
   }
+  addAssignedStaffPairs(state.pairMatrix, Object.values(candidate.roles), -1);
 
   day.roles.forEach((role) => {
     const staffIndex = candidate.roles[role];
@@ -1397,6 +1376,15 @@ function rollbackAssignment(day, candidate, state) {
 function addPair(pairMatrix, staffA, staffB, delta = 1) {
   pairMatrix[staffA][staffB] += delta;
   pairMatrix[staffB][staffA] += delta;
+}
+
+function addAssignedStaffPairs(pairMatrix, staffIndexes, delta = 1) {
+  const uniqueStaffIndexes = [...new Set(staffIndexes)];
+  for (let leftIndex = 0; leftIndex < uniqueStaffIndexes.length; leftIndex += 1) {
+    for (let rightIndex = leftIndex + 1; rightIndex < uniqueStaffIndexes.length; rightIndex += 1) {
+      addPair(pairMatrix, uniqueStaffIndexes[leftIndex], uniqueStaffIndexes[rightIndex], delta);
+    }
+  }
 }
 
 function countHalfDayAssignments(day, roles) {
@@ -1480,6 +1468,9 @@ function evaluateVectors(totals, weeklyCounts, saturdayTotals, positionCounts, r
     (sum, role) => sum + squaredDeviationFromTargets(roleCounts[role], roleTargets[role]),
     0,
   ) + SATURDAY_ROLES.reduce((sum, role) => sum + squaredDeviationFromTargets(roleCounts[role], roleTargets[role]), 0);
+  const pairCounts = pairValues(pairMatrix);
+  const pairMaxSpread = pairCounts.length ? rangeOf(pairCounts) : 0;
+  const pairDeviationScore = pairCounts.length ? squaredDeviationFromConstant(pairCounts, averageOf(pairCounts)) : 0;
 
   return [
     absoluteDeviationFromTargets(totals, totalTargets),
@@ -1489,6 +1480,9 @@ function evaluateVectors(totals, weeklyCounts, saturdayTotals, positionCounts, r
     weekdayRoleGapScore,
     positionMaxGap,
     positionGapScore,
+    pairMaxSpread,
+    pairDeviationScore,
+    maxPairCount(pairMatrix),
     weeklyMaxOverCap,
     weeklyOverCapScore,
     weeklyMaxDeviation,
@@ -1498,8 +1492,6 @@ function evaluateVectors(totals, weeklyCounts, saturdayTotals, positionCounts, r
     squaredDeviationFromConstant(saturdayTotals, targetSaturday),
     roleMaxDeviation,
     roleDeviationScore,
-    pairSpread(pairMatrix),
-    maxPairCount(pairMatrix),
     zeroPairCount(pairMatrix),
   ];
 }
@@ -1514,6 +1506,10 @@ function squaredDeviationFromTargets(values, targets) {
 
 function squaredDeviationFromConstant(values, target) {
   return values.reduce((sum, value) => sum + (value - target) ** 2, 0);
+}
+
+function averageOf(values) {
+  return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : 0;
 }
 
 function zeroPairCount(pairMatrix) {
@@ -1548,13 +1544,18 @@ function maxPairCount(pairMatrix) {
 }
 
 function pairSpread(pairMatrix) {
+  const values = pairValues(pairMatrix);
+  return values.length ? rangeOf(values) : 0;
+}
+
+function pairValues(pairMatrix) {
   const values = [];
   for (let i = 0; i < pairMatrix.length; i += 1) {
     for (let j = i + 1; j < pairMatrix.length; j += 1) {
       values.push(pairMatrix[i][j]);
     }
   }
-  return values.length ? rangeOf(values) : 0;
+  return values;
 }
 
 function compareScore(left, right) {
