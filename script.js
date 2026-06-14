@@ -198,9 +198,9 @@ const appState = {
 };
 
 function init() {
-  const today = new Date();
-  elements.yearInput.value = String(today.getFullYear());
-  elements.monthInput.value = String(today.getMonth() + 1);
+  const defaultDate = getNextMonthDate(new Date());
+  elements.yearInput.value = String(defaultDate.getFullYear());
+  elements.monthInput.value = String(defaultDate.getMonth() + 1);
   elements.staffCountInput.value = String(DEFAULT_STAFF_COUNT);
 
   renderStaffInputs();
@@ -226,6 +226,10 @@ function init() {
   if (savedShiftKey) {
     loadSavedShiftPreset(savedShiftKey);
   }
+}
+
+function getNextMonthDate(date) {
+  return new Date(date.getFullYear(), date.getMonth() + 1, 1);
 }
 
 function renderStaffInputs(options = {}) {
