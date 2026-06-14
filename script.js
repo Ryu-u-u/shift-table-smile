@@ -183,6 +183,7 @@ const elements = {
   scheduleTable: document.getElementById("scheduleTable"),
   statsTable: document.getElementById("statsTable"),
   positionTable: document.getElementById("positionTable"),
+  weeklyTable: document.getElementById("weeklyTable"),
   pairSummary: document.getElementById("pairSummary"),
   pairTable: document.getElementById("pairTable"),
   summaryCards: document.getElementById("summaryCards"),
@@ -1618,6 +1619,7 @@ function renderResults(result) {
   renderScheduleTable(scheduleInfo, staffList, result.assignmentsByDate);
   renderStatsTable(staffList, result);
   renderPositionTable(staffList, result);
+  renderWeeklyTable(scheduleInfo, staffList, result);
   renderPairSummary(result.pairMatrix);
   renderPairTable(staffNames, result.pairMatrix);
 }
@@ -1804,6 +1806,25 @@ function renderPositionTable(staffList, result) {
   `).join("");
 }
 
+function renderWeeklyTable(scheduleInfo, staffList, result) {
+  const thead = elements.weeklyTable.querySelector("thead");
+  const tbody = elements.weeklyTable.querySelector("tbody");
+
+  thead.innerHTML = `
+    <tr>
+      <th>スタッフ</th>
+      ${Array.from({ length: scheduleInfo.weekCount }, (_, index) => `<th>${index + 1}週目</th>`).join("")}
+    </tr>
+  `;
+
+  tbody.innerHTML = staffList.map((staff, staffIndex) => `
+    <tr>
+      <td>${escapeHtml(staff.name)}</td>
+      ${result.weeklyCounts[staffIndex].map((count) => `<td>${count}</td>`).join("")}
+    </tr>
+  `).join("");
+}
+
 function renderPairSummary(pairMatrix) {
   const stats = getPairStats(pairMatrix);
   const cards = [
@@ -1866,6 +1887,8 @@ function clearResults() {
   elements.statsTable.querySelector("tbody").innerHTML = "";
   elements.positionTable.querySelector("thead").innerHTML = "";
   elements.positionTable.querySelector("tbody").innerHTML = "";
+  elements.weeklyTable.querySelector("thead").innerHTML = "";
+  elements.weeklyTable.querySelector("tbody").innerHTML = "";
   elements.pairSummary.innerHTML = "";
   elements.pairTable.querySelector("thead").innerHTML = "";
   elements.pairTable.querySelector("tbody").innerHTML = "";

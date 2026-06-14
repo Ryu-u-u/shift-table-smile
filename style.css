@@ -701,22 +701,25 @@ input[type="text"]:focus {
 }
 
 .report-stats-wrap,
-.report-position-wrap {
+.report-position-wrap,
+.report-weekly-wrap {
   padding-top: 0;
 }
 
-.report-position-wrap {
+.report-weekly-wrap {
   padding-bottom: 18px;
 }
 
 .report-card #statsTable tbody td,
-.report-card #positionTable tbody td {
+.report-card #positionTable tbody td,
+.report-card #weeklyTable tbody td {
   height: 28px;
   font-weight: 600;
 }
 
 .report-card #statsTable td:first-child,
-.report-card #positionTable td:first-child {
+.report-card #positionTable td:first-child,
+.report-card #weeklyTable td:first-child {
   text-align: left;
   padding-left: 10px;
 }
@@ -1209,11 +1212,12 @@ input[type="text"]:focus {
   }
 
   .report-card #statsTable tbody td,
-  .report-card #positionTable tbody td {
+  .report-card #positionTable tbody td,
+  .report-card #weeklyTable tbody td {
     height: 14px;
   }
 
-  .report-position-wrap {
+  .report-weekly-wrap {
     padding-bottom: 0;
   }
 }
